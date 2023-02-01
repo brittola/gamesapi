@@ -1,28 +1,78 @@
 # Games API
 #### API REST de jogos com Node.js e MySQL
-
-### Endpoints
-```
-(GET) /games
-```
-- Retorna todos os jogos presentes no banco de dados.
-```
-(GET) /games/id
-```
-- Retorna um jogo específico pelo id.
-```
-(POST) /games
-```
-- Recebe um JSON { title (string), price (number), year (number) }, valida e cadastra no banco de dados.
-```
-(PUT) /games/id
-```
-- Recebe um JSON { title (string), price (number), year (number) }, valida e atualiza apenas os campos válidos. (Neste endpoint, os campos são opcionais).
-```
-(DELETE) /games/id
-```
-- Busca pelo o jogo pelo id e, caso exista, deleta do banco de dados.
-
-Essa foi a minha primeira API seguindo os padrões REST, então pode ser que nem tudo esteja feito da melhor maneira possível :)
-
+## Endpoints
+### (GET) /games
+Retorna um JSON com todos os jogos presentes no banco de dados.
+#### Parâmetros
+Nenhum.
+#### Respostas
+##### 200 - OK
+Você recebe a lista de jogos.
+##### 401 - Não autorizado
+Você não possui o token JWT para acessar as rotas.
+##### 404 - Not found
+Não há jogos salvos no banco de dados.
+##### 500 - Internal Server Error
+O servidor não conseguiu buscar os dados.
+***
+### (GET) /games/id
+Retorna o JSON de um jogo específico.
+#### Parâmetros
+- ID do jogo.
+#### Respostas
+##### 200 - OK
+Você recebe o jogo com o ID indicado.
+##### 401 - Não autorizado
+Você não possui o token JWT para acessar as rotas.
+##### 404 - Not Found
+Não há jogos salvos no banco de dados com o ID indicado.
+##### 500 - Internal Server Error
+O servidor não conseguiu realizar a busca.
+***
+### (POST) /games
+Cadastra um jogo no banco de dados.
+#### Parâmetros
+- JSON com os campos:
+  - title(string)
+  - price(number)
+  - year(number)
+#### Respostas
+##### 200 - OK
+O jogo foi cadastrado.
+##### 400 - Bad Request
+Algum ou alguns dados estão inválidos.
+##### 401 - Não autorizado
+Você não possui o token JWT para acessar as rotas.
+***
+### (PUT) /games/id
+Atualiza algum jogo no banco de dados.
+#### Parâmetros
+- ID do jogo
+- JSON com os campos:
+  - title(string)
+  - price(number)
+  - year(number)
+Os campos são opcionais, mas devem ser respeitados os tipos dos dados a serem atualizados.
+#### Respostas
+##### 200 - OK
+A edição ocorreu com sucesso.
+#### 400 - Bad Request
+ID ou dado inválido.
+#### 401 - Não autorizado
+Você não possui o token JWT para acessar as rotas.
+#### 404 - Not Found
+Não há nenhum jogo com o ID indicado.
+***
+### (DELETE) /games/id
+Deleta um jogo do banco de dados.
+#### Parâmetros
+- ID do jogo
+#### Respostas
+##### 202 - OK
+Jogo deletado com sucesso.
+##### 400 - Bad Request
+ID inválido.
+##### 401 - Não autorizado
+Você não possui o token JWT para acessar as rotas.
+***
 ### Para conectar ao banco de dados, configure com o seu banco no arquivo "/database/connection.js"
