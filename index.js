@@ -2,6 +2,15 @@ const express = require('express');
 const app = express();
 const connection = require('./database/connection');
 const Game = require('./database/Game');
+const User = require('./database/User');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const auth = require('./middlewares/auth');
+
+const JWT_SECRET = require('./JWT/JWT_SECRET');
+
+app.use(cors());
 
 app.use(express.json());
 
@@ -13,7 +22,7 @@ connection.authenticate()
         console.log(err);
     });
 
-app.get('/games', async (req, res) => {
+app.get('/games', auth, async (req, res) => {
     try {
         let games = await Game.findAll();
 
@@ -27,7 +36,7 @@ app.get('/games', async (req, res) => {
     }
 });
 
-app.get('/games/:id', async (req, res) => {
+app.get('/games/:id', auth, async (req, res) => {
     const id = req.params.id;
 
     if (isNaN(id)) {
@@ -47,7 +56,7 @@ app.get('/games/:id', async (req, res) => {
     }
 });
 
-app.post('/games', (req, res) => {
+app.post('/games', auth, (req, res) => {
     const {title, price, year} = req.body;
 
     if (title == undefined || price == undefined || year == undefined) {
@@ -67,7 +76,7 @@ app.post('/games', (req, res) => {
 
 });
 
-app.delete('/games/:id', (req, res) => {
+app.delete('/games/:id', auth, (req, res) => {
     const id = req.params.id;
 
     if (isNaN(id)) {
@@ -81,7 +90,7 @@ app.delete('/games/:id', (req, res) => {
     }
 });
 
-app.put('/games/:id', async (req, res) => {
+app.put('/games/:id', auth, async (req, res) => {
     const id = req.params.id;
     let { title, price, year } = req.body;
 
@@ -110,6 +119,66 @@ app.put('/games/:id', async (req, res) => {
         } else {
             res.sendStatus(404);
         }
+    }
+});
+
+// Login
+app.post('/auth', (req, res) => {
+    const {email, password} = req.body;
+
+    if (email && password) {
+        User.findOne({where: {email}}).then(user => {
+            if (user) {
+                let confirm = bcrypt.compareSync(password, user.password);
+
+                if (confirm) {
+                    jwt.sign({id: user.id, email}, JWT_SECRET, {expiresIn: '48h'}, (err, token) => {
+                        if (err) {
+                            res.status(500);
+                            res.json({err: "Falha interna"});
+                        } else {
+                            res.status(200);
+                            res.json({token});
+                        }
+                    });
+                } else {
+                    res.status(401);
+                    res.json({err: "E-mail ou senha inválidos"});
+                }
+            } else {
+                res.status(404);
+                res.json({err: "Usuário não encontrado."});
+            }
+        });
+    } else {
+        res.status(400);
+        res.json({err: "E-mail ou senha inválidos."});
+    }
+});
+
+app.post('/user', async (req, res) => {
+    const {email, password} = req.body;
+
+    if (email && password) {
+        let salt = bcrypt.genSaltSync(10);
+
+        User.findOne({where: {email}}).then(user => {
+            if (user) {
+                res.status(400);
+                res.json({err: "E-mail já cadastrado."});
+            } else {
+                User.create({
+                    email,
+                    password: bcrypt.hashSync(password, salt)
+                }).then(() => {
+                    res.sendStatus(200);
+                });
+            }
+        });
+
+    } else {
+        res.status(400);
+        res.json({err: "E-mail ou senha inválida para criação de usuário."});
     }
 });
 
