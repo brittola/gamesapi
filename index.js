@@ -10,10 +10,13 @@ const auth = require('./middlewares/auth');
 
 const JWT_SECRET = require('./JWT/JWT_SECRET');
 
+// CORS
 app.use(cors());
 
+// Body Parser
 app.use(express.json());
 
+// Database
 connection.authenticate()
     .then(() => {
         console.log('Banco de dados conectado.');
@@ -22,12 +25,41 @@ connection.authenticate()
         console.log(err);
     });
 
-app.get('/games', auth, async (req, res) => {
+// Routes
+app.get('/games', async (req, res) => {
+    const HATEOAS = [
+        {
+            href: "http://localhost:8787/games/0",
+            method: "GET",
+            rel: "get_game"
+        },
+        {
+            href: "http://localhost:8787/games/0",
+            method: "DELETE",
+            rel: "delete_game"
+        },
+        {
+            href: "http://localhost:8787/games/",
+            method: "POST",
+            rel: "create_game"
+        },
+        {
+            href: "http://localhost:8787/games/0",
+            method: "PUT",
+            rel: "edit_game"
+        },
+        {
+            href: "http://localhost:8787/auth",
+            method: "POST",
+            rel: "auth_user"
+        }
+    ];
+
     try {
         let games = await Game.findAll();
 
         if (games) {
-            res.json(games);
+            res.json({games, _links: HATEOAS});
         } else {
             res.sendStatus(404);
         }
@@ -36,8 +68,36 @@ app.get('/games', auth, async (req, res) => {
     }
 });
 
-app.get('/games/:id', auth, async (req, res) => {
+app.get('/games/:id', async (req, res) => {
     const id = req.params.id;
+
+    const HATEOAS = [
+        {
+            href: "http://localhost:8787/games/" + id,
+            method: "DELETE",
+            rel: "delete_game"
+        },
+        {
+            href: "http://localhost:8787/games/" + id,
+            method: "PUT",
+            rel: "edit_game"
+        },
+		{
+            href: "http://localhost:8787/games/",
+            method: "GET",
+            rel: "get_all_games"
+        },
+        {
+            href: "http://localhost:8787/games/",
+            method: "POST",
+            rel: "create_game"
+        },
+        {
+            href: "http://localhost:8787/auth",
+            method: "POST",
+            rel: "auth_user"
+        }
+    ];
 
     if (isNaN(id)) {
         res.sendStatus(400);
@@ -46,7 +106,7 @@ app.get('/games/:id', auth, async (req, res) => {
             let game = await Game.findByPk(id);
 
             if (game) {
-                res.json(game);
+                res.json({game, _links: HATEOAS});
             } else {
                 res.sendStatus(404);
             }
@@ -59,6 +119,29 @@ app.get('/games/:id', auth, async (req, res) => {
 app.post('/games', auth, (req, res) => {
     const {title, price, year} = req.body;
 
+    const HATEOAS = [
+        {
+            href: "http://localhost:8787/games",
+            method: "GET",
+            rel: "get_all_games"
+        },
+        {
+            href: "http://localhost:8787/games/0",
+            method: "GET",
+            rel: "get_game"
+        },
+        {
+            href: "http://localhost:8787/games/0",
+            method: "PUT",
+            rel: "edit_game"
+        },
+        {
+            href: "http://localhost:8787/games/0",
+            method: "DELETE",
+            rel: "delete_game"
+        }
+    ];
+
     if (title == undefined || price == undefined || year == undefined) {
         res.sendStatus(400);
     } else if (typeof title != 'string' || title == '') {
@@ -70,7 +153,8 @@ app.post('/games', auth, (req, res) => {
     } else {
         Game.create({ title, price: price.toFixed(2), year: year.toFixed(0) })
             .then(() => {
-                res.sendStatus(200);
+                res.status(200);
+                res.json({_links: HATEOAS});
             });
     }
 
@@ -94,6 +178,29 @@ app.put('/games/:id', auth, async (req, res) => {
     const id = req.params.id;
     let { title, price, year } = req.body;
 
+    const HATEOAS = [
+        {
+            href: "http://localhost:8787/games",
+            method: "GET",
+            rel: "get_all_games"
+        },
+        {
+            href: "http://localhost:8787/games/" + id,
+            method: "GET",
+            rel: "get_game"
+        },
+        {
+            href: "http://localhost:8787/games/",
+            method: "POST",
+            rel: "create_game"
+        },
+        {
+            href: "http://localhost:8787/games/" + id,
+            method: "DELETE",
+            rel: "delete_game"
+        },
+    ];
+
     if (isNaN(id)) {
         res.sendStatus(400);
     } else {
@@ -114,7 +221,8 @@ app.put('/games/:id', auth, async (req, res) => {
             }
 
             Game.update({ title: game.title, year: game.year, price: game.price }, {where: { id }}).then(() => {
-                res.sendStatus(200);
+                res.status(200);
+                res.json({_links: HATEOAS})
             });
         } else {
             res.sendStatus(404);
@@ -125,6 +233,14 @@ app.put('/games/:id', auth, async (req, res) => {
 // Login
 app.post('/auth', (req, res) => {
     const {email, password} = req.body;
+
+    const HATEOAS = [
+        {
+            href: "http://localhost:8787/user",
+            method: "POST",
+            rel: "create_user"
+        }
+    ];
 
     if (email && password) {
         User.findOne({where: {email}}).then(user => {
@@ -138,7 +254,7 @@ app.post('/auth', (req, res) => {
                             res.json({err: "Falha interna"});
                         } else {
                             res.status(200);
-                            res.json({token});
+                            res.json({token, _links: HATEOAS});
                         }
                     });
                 } else {
