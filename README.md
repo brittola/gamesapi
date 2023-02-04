@@ -1,5 +1,5 @@
 # Games API
-#### API REST de jogos com Node.js e MySQL
+#### API RESTful de jogos com Node.js e MySQL
 ## Endpoints
 ### (GET) /games
 Retorna um JSON com todos os jogos presentes no banco de dados.
@@ -8,6 +8,8 @@ Nenhum.
 #### Respostas
 ##### 200 - OK
 Você recebe a lista de jogos.
+
+![image](https://user-images.githubusercontent.com/99913525/216788596-c5a79368-3295-4559-8cf7-e12c5d05e4a5.png)
 ##### 401 - Não autorizado
 Você não possui o token JWT para acessar as rotas.
 ##### 404 - Not found
@@ -22,6 +24,8 @@ Retorna o JSON de um jogo específico.
 #### Respostas
 ##### 200 - OK
 Você recebe o jogo com o ID indicado.
+
+![image](https://user-images.githubusercontent.com/99913525/216788660-51c9c0be-f423-4dad-835d-b77ddb02f719.png)
 ##### 401 - Não autorizado
 Você não possui o token JWT para acessar as rotas.
 ##### 404 - Not Found
